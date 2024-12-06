@@ -43,13 +43,13 @@ def part1():
 
     pos = find_guard()
     direction = "up"
-    unique_coords = []
+    unique_coords = set()
     while pos != (-1, -1):
         pos, direction = find_next_pos(pos, direction)
         if pos not in unique_coords:
-            unique_coords.append(pos)
+            unique_coords.add(pos)
 
-    print(len(unique_coords))
+    return unique_coords
 
 
 def part2():
@@ -65,55 +65,56 @@ def part2():
 
     direction_order = ["up", "right", "down", "left"]
 
-    def find_guard():
+    def find_guard(data):
         for y, elem in enumerate(data):
             if "^" in elem:
                 for x in range(len(elem)):
                     if "^" == elem[x]:
                         return x, y
 
-    def find_coords(x, y):
-        if 0 <= y < len(data) and 0 <= x < len(data[y]):
-            return data[y][x]
-        return None
+    def move_guard(data, start_x, start_y, obstruction=None):
+        matrix = [list(row) for row in data]
+        if obstruction:
+            matrix[obstruction[1]][obstruction[0]] = "#"
 
-    def find_next_pos(pos, direction):
-        dx, dy = directions[direction]
-        new_pos = (pos[0] + dx, pos[1] + dy)
+        x, y = start_x, start_y
+        direction_index = 0
+        visited_positions = set()
 
-        if find_coords(*new_pos) == ".":
-            return new_pos, direction
-        elif find_coords(*new_pos) == "#":
-            new_direction = direction_order[
-                (direction_order.index(direction) + 1) % len(direction_order)
-            ]
-            return find_next_pos(pos, new_direction)
+        while True:
+            if (x, y, direction_index) in visited_positions:
+                return True
+            visited_positions.add((x, y, direction_index))
 
-        return (-1, -1), None
+            dx, dy = directions[direction_order[direction_index]]
+            nx, ny = x + dx, y + dy
 
-
-    total = 0
-    for y, row in enumerate(data):
-        for x, col in enumerate(row):
-            if find_coords(x, y) == "#" or find_coords(x, y) == "^":
-                pass
+            if (
+                0 <= ny < len(matrix) and
+                0 <= nx < len(matrix[0]) and
+                matrix[ny][nx] == "."
+            ):
+                x, y = nx, ny
             else:
-                print((x+(y*len(data[0]))),"/",str(len(data)*len(data[0])))
-                print(total)
-                data_copy = copy.deepcopy(data)
-                new_string = data_copy[y][:x] + "#" + data_copy[y][x + 1:]
-                data_copy[y] = new_string
-                pos = find_guard()
-                direction = "up"
-                unique_coords = []
-                while pos != (-1, -1):
-                    pos, direction = find_next_pos(pos, direction)
-                    if (pos, direction) not in unique_coords:
-                        unique_coords.append((pos, direction))
-                    elif (pos, direction) in unique_coords:
-                        total += 1
-                        pos = (-1, -1)
+                direction_index = (direction_index + 1) % 4
 
-    print(total)
+            if not (0 <= ny < len(matrix) and 0 <= nx < len(matrix[0])):
+                break
+
+        return False
+
+    guard_x, guard_y = find_guard(data)
+    loop_count = 1
+
+    for y in range(len(data)):
+        for x in range(len(data[0])):
+            if data[y][x] == "#" or (x, y) == (guard_x, guard_y):
+                continue
+
+            if move_guard(data, guard_x, guard_y, obstruction=(x, y)):
+                loop_count += 1
+
+    print(loop_count)
+
 
 part2()
