@@ -44,7 +44,7 @@ def part1():
 
 
 def part2():
-    data = open("data.txt").read().split("\n\n")
+    data = open("data.txt ").read().split("\n\n")
 
     rules = {}
     for rule in data[0].split("\n"):
